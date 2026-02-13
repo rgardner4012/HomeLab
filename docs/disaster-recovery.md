@@ -14,7 +14,6 @@
   - [ ] JellySeer
   - [ ] Prowlarr
   - [ ] NZBGet
-  - [ ] Qbittorrent
   - [ ] Portainer
   - [ ] Plex
   - [ ] Rancher
