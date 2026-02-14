@@ -16,7 +16,7 @@ A hybrid homelab managed entirely through GitOps — Docker Compose stacks on a 
 ```text
 homelab/
 ├── .github/workflows/         # CI/CD — linting, Flux diff, NAS deploy
-├── docs/                      # Architecture, decisions, runbooks
+├── docs/                      # Architecture decisions, runbooks
 │   ├── adr.md                 # Architecture Decision Records
 │   ├── bootstrap.md           # Cluster bootstrap procedure
 │   ├── naming-and-ips.md      # Hostnames, VLANs, IP allocations
@@ -61,13 +61,13 @@ See [ADR-005](docs/adr.md) for the full rationale.
 
 ## Getting Started
 
-See [docs/setup-guide.md](docs/setup-guide.md) for the full bootstrap procedure. (TODO: Add setup-guide.md)
+See <!-- [docs/setup-guide.md](docs/setup-guide.md) --> setup-guide.md, for the full bootstrap procedure. (TODO: Add setup-guide.md)
 
 ## Docs
 
-- [Architecture](docs/ard.md) — service map, data flows, storage topology
+- [Architecture](docs/adr.md) — service map, data flows, storage topology
 <!--
 - [Hardware](docs/hardware.md) — specs, network layout
 -->
-- [Networking](docs/network-and-ips.md) — VLANs, DNS, IP allocations
+- [Networking](docs/naming-and-ips.md) — VLANs, DNS, IP allocations
 - [Disaster Recovery](docs/disaster-recovery.md) — backup strategy, restore procedures

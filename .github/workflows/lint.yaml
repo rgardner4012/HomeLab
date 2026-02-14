@@ -74,3 +74,12 @@ jobs:
               docker compose -f "$dir/docker-compose.yaml" config --quiet
             fi
           done
+
+  link-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          config-file: '.markdown-link-check.json'
+          use-quiet-mode: 'yes'
