@@ -66,8 +66,6 @@ See <!-- [docs/setup-guide.md](docs/setup-guide.md) --> setup-guide.md, for the 
 ## Docs
 
 - [Architecture](docs/adr.md) — service map, data flows, storage topology
-<!--
-- [Hardware](docs/hardware.md) — specs, network layout
--->
+- <!-- [Hardware](docs/hardware.md) — specs, network layout --> TODO: Write setupguide.md
 - [Networking](docs/naming-and-ips.md) — VLANs, DNS, IP allocations
 - [Disaster Recovery](docs/disaster-recovery.md) — backup strategy, restore procedures
