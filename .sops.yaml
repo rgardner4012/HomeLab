@@ -6,7 +6,7 @@ creation_rules:
       age1yvyefwwh6avrzpkz2vr3w86ly6q97hdpz02jns2yvaafnjnv448s7jdx7r
 
   # Kubernetes secrets (bootstrap only — most secrets come from OpenBao)
-  - path_regex: kubernetes/.*\.sops\.yaml$
+  - path_regex: clusters/.*\.sops\.yaml$
     encrypted_regex: ^(data|stringData)$
     age: >-
       age1yvyefwwh6avrzpkz2vr3w86ly6q97hdpz02jns2yvaafnjnv448s7jdx7r

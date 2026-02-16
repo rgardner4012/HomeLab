@@ -1,0 +1,21 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: apps-pihole
+  namespace: flux-system
+spec:
+  interval: 30m
+  retryInterval: 1m
+  path: ./clusters/hlcl1/apps/pihole
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: infra-longhorn
+    - name: infra-metallb
+  timeout: 5m
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
