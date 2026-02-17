@@ -4,3 +4,4 @@ resources:
   - infra/storage/longhorn
   - infra/network/metallb
   - apps/pihole
+  - apps/monitoring

@@ -1,0 +1,8 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources: []
+# Future additions:
+#   - Additional ServiceMonitor resources (e.g., longhorn, pihole, flux)
+#   - Custom Grafana dashboards as ConfigMaps
+#   - PrometheusRule resources for custom alerts
