@@ -1,0 +1,102 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kube-prometheus-stack
+  namespace: monitoring
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: kube-prometheus-stack
+      version: "82.x"
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community
+        namespace: flux-system
+  install:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  values:
+    grafana:
+      enabled: true
+      adminUser: admin
+      adminPassword: ""  # Overridden by existingSecret below
+      admin:
+        existingSecret: grafana-admin-credentials # pragma: allowlist secret
+        userKey: admin-user # pragma: allowlist secret
+        passwordKey: admin-password # pragma: allowlist secret
+      persistence:
+        enabled: true
+        storageClassName: nfs
+        size: 2Gi
+      sidecar:
+        dashboards:
+          enabled: true
+          searchNamespace: ALL
+
+    prometheus:
+      prometheusSpec:
+        retention: 30d
+        retentionSize: "120GB"
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            memory: 2Gi
+        storageSpec:
+          volumeClaimTemplate:
+            spec:
+              storageClassName: nfs
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 150Gi
+        # Scrape all ServiceMonitors across namespaces
+        serviceMonitorSelectorNilUsesHelmValues: false
+        podMonitorSelectorNilUsesHelmValues: false
+        ruleSelectorNilUsesHelmValues: false
+
+    alertmanager:
+      alertmanagerSpec:
+        storage:
+          volumeClaimTemplate:
+            spec:
+              storageClassName: nfs
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 1Gi
+
+    nodeExporter:
+      enabled: true
+
+    kubeStateMetrics:
+      enabled: true
+
+    defaultRules:
+      create: true
+      rules:
+        etcd: true
+        kubeScheduler: false  # RKE2 runs scheduler in-process
+        kubeControllerManager: false  # RKE2 runs controller-manager in-process
+
+    # RKE2 embeds these components; disable standalone scraping
+    kubeScheduler:
+      enabled: false
+    kubeControllerManager:
+      enabled: false
+    kubeEtcd:
+      enabled: true
+      service:
+        enabled: true
+        port: 2381
+        targetPort: 2381
