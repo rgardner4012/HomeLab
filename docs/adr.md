@@ -107,3 +107,22 @@ Split Helm chart deployments and their post-install CR configuration into two se
 - Slightly more files per component (two Flux Kustomizations + two subdirectories instead of one flat directory).
 - Pattern is reusable for future components like cert-manager, Traefik, and external-dns where we want CRDs -> CRs.
 - Debugging is easier since each Flux Kustomization has its own status and can fail independently.
+
+## 007 - NFS CSI driver for monitoring storage
+
+### Context
+
+The kube-prometheus-stack will need persistent storage for Prometheus (metrics), Grafana (dashboards/config), and Alertmanager. Prometheus in particular can consume significant disk space (60-90GB at 30 days retention). Longhorn SSDs are limited (200-400GB per node) and better reserved for workloads needing IOPS.
+
+### Decision
+
+Deploy the NFS CSI driver (csi-driver-nfs) as a second StorageClass alongside Longhorn. Use NFS for monitoring storage (Prometheus, Grafana, Alertmanager) while keeping Longhorn as the default for everything else.
+
+### Impacts
+
+- 200GB Prometheus PVC on NFS keeps SSD space free for latency-sensitive workloads.
+- NFS query performance is adequate for monitoring, dashboards are read-heavy but not latency-critical.
+- Requires an NFS export on the NAS configured for the cluster nodes.
+- NFS CSI driver deploys a DaemonSet (node plugin) and a Deployment (controller) — lightweight resource footprint.
+- StorageClass `nfs` is explicitly not default — workloads must opt-in by specifying `storageClassName: nfs`.
+- If NAS is down, Prometheus stops writing but the cluster keeps running, acceptable.
