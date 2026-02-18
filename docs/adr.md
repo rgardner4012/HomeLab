@@ -45,7 +45,8 @@ We need to manage secrets for at least 2 platforms: K8s and Docker compose stack
 
 ### Decision
 
-OpenBao + External Secrets Operator for K8s secrets, SOPS for Docker secrets
+OpenBao + External Secrets Operator for K8s secrets, SOPS for Docker secrets. OpenBao runs directly on NAS to avoid circular dependencies, ESO runs in cluster and can serve
+cashed secrets if NAS is down.
 
 ### Impacts
 
