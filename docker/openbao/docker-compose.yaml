@@ -1,0 +1,25 @@
+---
+services:
+  openbao:
+    image: openbao/openbao:2.1.0
+    container_name: openbao
+    restart: unless-stopped
+    user: "990:990"
+    cap_add:
+      - IPC_LOCK
+    ports:
+      - "8200:8200"
+      - "8201:8201"
+    volumes:
+      - /volume3/docker/openbao/openbao.hcl:/openbao/config/openbao.hcl:ro
+      - /volume1/data/openbao:/openbao/data
+    command: server
+    environment:
+      - BAO_ADDR=http://127.0.0.1:8200
+      - TZ=${TZ}
+    healthcheck:
+      test: ["CMD", "bao", "status", "-address=http://127.0.0.1:8200"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

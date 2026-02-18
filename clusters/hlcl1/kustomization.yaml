@@ -4,5 +4,6 @@ resources:
   - infra/storage/longhorn
   - infra/storage/nfs
   - infra/network/metallb
+  - infra/secrets/external-secrets
   - apps/pihole
   - apps/monitoring
