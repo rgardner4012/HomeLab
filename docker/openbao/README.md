@@ -15,7 +15,7 @@ docker exec -it openbao bao operator init \
   -key-shares=5 \
   -key-threshold=3
 
-# IMPORTANT: Save the 5 unseal keys and root token in 1Password immediately.
+# IMPORTANT: Save the 5 unseal keys and root token immediately.
 # You will need 3 of the 5 keys to unseal after every restart.
 
 # Unseal (run 3 times with different keys)
@@ -29,7 +29,7 @@ docker exec -it openbao bao status
 
 ## After NAS reboot
 
-OpenBao starts sealed after every restart. You must unseal it manually:
+OpenBao starts sealed after every restart. It must be unsealed manually:
 
 ```bash
 docker exec -it openbao bao operator unseal  # key 1
@@ -95,6 +95,7 @@ docker exec -it openbao bao kv put secret/apps/pihole \
 Raft snapshots capture the full OpenBao state:
 
 ```bash
+# TODO: Automate backups
 docker exec -it openbao bao operator raft snapshot save /openbao/data/backup.snap
 # Then copy backup.snap to a safe location
 ```
