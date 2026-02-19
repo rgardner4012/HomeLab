@@ -7,8 +7,8 @@ metadata:
     storageclass.kubernetes.io/is-default-class: "false"
 provisioner: nfs.csi.k8s.io
 parameters:
-  server: "192.168.0.233"  # TODO: Replace with NAS IP
-  share: "/volume1/monitoring"  # TODO: Replace with your NFS export path
+  server: "192.168.0.233"
+  share: "/volume1/monitoring"
 reclaimPolicy: Retain
 volumeBindingMode: Immediate
 allowVolumeExpansion: true
