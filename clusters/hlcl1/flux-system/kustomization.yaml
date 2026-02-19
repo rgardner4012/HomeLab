@@ -3,3 +3,13 @@ kind: Kustomization
 resources:
 - gotk-components.yaml
 - gotk-sync.yaml
+patches:
+- patch: | # pragma: allowlist secret
+    - op: add
+      path: /spec/decryption
+      value:
+        provider: sops
+        secretRef:
+          name: sops-age
+  target:
+    kind: Kustomization
