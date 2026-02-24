@@ -6,6 +6,8 @@
 - [ ] Longhorn backup target configured (NAS NFS share)
 - [ ] Longhorn recurring snapshots scheduled
 - [X] Age private key backed up offline
+- [ ] CNPG backup target configured (NAS NFS share or object storage)
+- [ ] CNPG scheduled backups enabled for ff-postgres (production)
 - [ ] NAS app config directories backed up
 - [ ] Find per app solution for NAS backed apps
   - [ ] Sonarr
@@ -29,6 +31,8 @@
 | Longhorn volumes | Last snapshot | ~1 hr | Restore from Longhorn backup target (NFS Share) |
 | OpenBao data | Last Raft snapshot | ~1 hr | Requires restore + unseal |
 | Prometheus/Grafana data | Last Longhorn snapshot | ~1 hr | Dashboards are in Git (ConfigMaps) |
+| ff-postgres (production) | Last CNPG backup | ~30 min | 3-replica HA; restore from CNPG backup target |
+| ff-postgres (dev) | N/A | ~5 min | Single instance, dev data is disposable — recreate from scratch |
 | Media library | N/A | N/A | Not backed up (re-downloadable, want to find a way to track what currently exists, will *arr config backups work here?) |
 | App configs (Sonarr, Radarr, etc.) | Last NAS backup | ~30 min | Restore config dirs, redeploy |
 | SOPS encryption key (age) | Offline backup and external Password Manager | Manual | Required to decrypt all secrets |
@@ -64,6 +68,22 @@ MetalLB is fully managed by Flux via the chart/config split pattern (see [ADR-00
 4. LoadBalancer services pick up external IPs from the 192.168.0.240-250 range
 
 No manual intervention required.
+
+### ff-postgres (CloudNativePG) recovery
+
+ff-postgres is managed by the CloudNativePG operator, reconciled by Flux via the `infra-ff-postgres` Kustomization.
+
+**Production** runs 3 replicas (1 primary, 2 standbys). On single-node failure, CNPG promotes a standby automatically — no data loss, no manual intervention.
+
+**On total cluster loss:**
+
+1. Flux reconciles `infra-shared-namespaces` → creates `ff-dev` and `ff-production` namespaces
+2. Flux reconciles `infra-cloudnativepg` → installs CNPG operator (`wait: true`)
+3. Flux reconciles `infra-ff-postgres` → creates `Cluster` resources
+4. CNPG restores from backup target (once backup is configured — see checklist above)
+5. `ff-postgres-app` Secret is recreated by CNPG and available to the ff app
+
+**Dev** instance (single replica) is treated as disposable — recreate from scratch, run migrations.
 
 ### PiHole recovery
 
