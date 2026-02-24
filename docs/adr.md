@@ -127,3 +127,20 @@ Deploy the NFS CSI driver (csi-driver-nfs) as a second StorageClass alongside Lo
 - NFS CSI driver deploys a DaemonSet (node plugin) and a Deployment (controller) — lightweight resource footprint.
 - StorageClass `nfs` is explicitly not default — workloads must opt-in by specifying `storageClassName: nfs`.
 - If NAS is down, Prometheus stops writing but the cluster keeps running, acceptable.
+
+## 008 - Shared namespaces for multi-Kustomization workloads
+
+### Context
+
+When an application has multiple independent Flux Kustomizations that share a namespace (e.g. a CNPG database cluster managed by infra and an app deployment managed via a separate GitRepository), namespace ownership becomes ambiguous. If the namespace is created by one Kustomization and Flux prune is enabled, deleting that Kustomization would delete the namespace and take down the other workload with it.
+
+### Decision
+
+Introduce `infra/shared-namespaces/` as the single owner of any namespace that is shared between two or more independent Flux Kustomizations. Neither the app nor the database config creates or owns these namespaces — they are pre-created infrastructure.
+
+### Impacts
+
+- Deleting an app or its database config will not accidentally delete the namespace or affect other workloads in it.
+- Namespaces are created early in the reconciliation order, before anything that depends on them.
+- New apps with shared namespaces add their namespace entry to `infra/shared-namespaces/namespaces.yaml` rather than creating their own namespace resource.
+- Single-namespace apps that own their namespace entirely (e.g. pihole) are unaffected and continue to manage their namespace locally.

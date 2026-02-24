@@ -5,5 +5,7 @@ resources:
   - infra/storage/nfs
   - infra/network/metallb
   - infra/secrets/external-secrets
+  - infra/shared-namespaces
+  - infra/databases
   - apps/pihole
   - apps/monitoring
