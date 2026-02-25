@@ -77,6 +77,14 @@ ff-postgres is managed by the CloudNativePG operator, reconciled by Flux via the
 
 **On total cluster loss:**
 
+Flux bootstrap command:
+  flux bootstrap github \
+    --owner=rgardner4012 \
+    --repository=HomeLab \
+    --branch=main \
+    --path=./clusters/hlcl1 \
+    --components-extra=image-reflector-controller,image-automation-controller
+
 1. Flux reconciles `infra-shared-namespaces` → creates `ff-dev` and `ff-production` namespaces
 2. Flux reconciles `infra-cloudnativepg` → installs CNPG operator (`wait: true`)
 3. Flux reconciles `infra-ff-postgres` → creates `Cluster` resources
