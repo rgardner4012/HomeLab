@@ -1,0 +1,12 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: ff-main
+  namespace: flux-system
+spec:
+  interval: 1m
+  url: ssh://git@github.com/rgardner4012/flockfeed
+  ref:
+    branch: main
+  secretRef:
+    name: flux-ff-deploy-key

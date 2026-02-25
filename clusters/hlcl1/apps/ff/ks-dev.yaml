@@ -1,0 +1,16 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: apps-ff-dev
+  namespace: flux-system
+spec:
+  interval: 10m
+  retryInterval: 1m
+  path: ./k8s/overlays/dev
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: ff-dev
+  dependsOn:
+    - name: infra-ff-postgres
+  timeout: 5m

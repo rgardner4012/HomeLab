@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - externalsecret-deploy-key.yaml
+  - externalsecret-registry-auth.yaml
+  - gitrepository-main.yaml
+  - gitrepository-dev.yaml
+  - imagerepository.yaml
+  - imagepolicy-dev.yaml
+  - imagepolicy-production.yaml
+  - imageupdateautomation-dev.yaml
+  - imageupdateautomation-production.yaml
+  - ks-dev.yaml
+  - ks-production.yaml
