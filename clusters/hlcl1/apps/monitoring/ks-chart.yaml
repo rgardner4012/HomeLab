@@ -18,4 +18,4 @@ spec:
     - name: infra-longhorn
     - name: infra-metallb
     - name: infra-nfs-config
-    - name: infra-external-secrets.conf
+    - name: infra-external-secrets
