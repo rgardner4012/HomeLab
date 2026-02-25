@@ -1,0 +1,24 @@
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageUpdateAutomation
+metadata:
+  name: ff-dev
+  namespace: flux-system
+spec:
+  interval: 1m
+  sourceRef:
+    kind: GitRepository
+    name: ff-dev
+  git:
+    checkout:
+      ref:
+        branch: dev
+    commit:
+      author:
+        email: fluxcdbot@users.noreply.github.com
+        name: fluxcdbot
+      messageTemplate: 'chore: update ff dev image to {{range .Updated.Images}}{{println .}}{{end}}'
+    push:
+      branch: dev
+  update:
+    path: ./k8s/overlays/dev
+    strategy: Setters

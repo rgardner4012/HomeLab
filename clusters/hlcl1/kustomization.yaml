@@ -9,3 +9,4 @@ resources:
   - infra/databases
   - apps/pihole
   - apps/monitoring
+  - apps/ff
