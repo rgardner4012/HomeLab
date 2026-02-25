@@ -28,6 +28,12 @@ spec:
   values:
     grafana:
       enabled: true
+      initChownData:
+        enabled: false
+      securityContext:
+        runAsUser: 472
+        runAsGroup: 472
+        fsGroup: 472
       adminUser: admin
       adminPassword: ""  # Overridden by existingSecret below
       admin:
