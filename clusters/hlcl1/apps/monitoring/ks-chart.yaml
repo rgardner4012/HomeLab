@@ -14,11 +14,8 @@ spec:
   path: ./clusters/hlcl1/apps/monitoring/chart
   prune: true
   wait: true
-  decryption:
-    provider: sops
-    secretRef:
-      name: sops-age
   dependsOn:
     - name: infra-longhorn
     - name: infra-metallb
     - name: infra-nfs-config
+    - name: infra-external-secrets.conf
