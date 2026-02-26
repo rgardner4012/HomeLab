@@ -16,7 +16,7 @@ spec:
       author:
         email: fluxcdbot@users.noreply.github.com
         name: fluxcdbot
-      messageTemplate: 'chore: update ff dev image to {{range .Changed.Images}}{{println .}}{{end}}'
+      messageTemplate: 'chore: update ff dev image to {{range .Changed.Objects}}{{println .}}{{end}}'
     push:
       branch: dev
   update:
