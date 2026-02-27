@@ -51,6 +51,8 @@ spec:
     extraEnvVars:
       TZ: "America/New_York"
       FTLCONF_webserver_port: "80"
+      # app_sudo is required on all nebula replicas for nebula-sync
+      FTLCONF_webserver_api_app_sudo: "true"
     resources:
       limits:
         cpu: 500m
