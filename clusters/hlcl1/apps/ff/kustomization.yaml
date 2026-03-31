@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - externalsecret-deploy-key.yaml
   - externalsecret-registry-auth.yaml
+  - externalsecret-registry-auth-ff-dev.yaml
   - gitrepository-main.yaml
   - gitrepository-dev.yaml
   - imagerepository.yaml
