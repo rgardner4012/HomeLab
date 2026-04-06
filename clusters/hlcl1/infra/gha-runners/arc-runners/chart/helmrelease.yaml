@@ -1,0 +1,62 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: arc-runner-set
+  namespace: arc-runners
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: gha-runner-scale-set
+      version: ">=0.9.0 <1.0.0"
+      sourceRef:
+        kind: HelmRepository
+        name: actions-runner-controller
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    githubConfigUrl: "https://github.com/rgardner4012/HomeLab"
+    githubConfigSecret: arc-github-app-secret # pragma: allowlist secret
+    minRunners: 0
+    maxRunners: 3
+    runnerScaleSetName: homelab-docker-deploy
+    containerMode:
+      type: kubernetes
+      kubernetesModeWorkVolumeClaim:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: longhorn
+        resources:
+          requests:
+            storage: 1Gi
+    template:
+      spec:
+        containers:
+          - name: runner
+            image: ghcr.io/actions/actions-runner:latest
+            env:
+              - name: NAS_SSH_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: nas-ssh-secret
+                    key: ssh_private_key
+              - name: NAS_SSH_KNOWN_HOSTS
+                valueFrom:
+                  secretKeyRef:
+                    name: nas-ssh-secret
+                    key: known_hosts
+              - name: NAS_HOST
+                valueFrom:
+                  secretKeyRef:
+                    name: nas-ssh-secret
+                    key: nas_host
+              - name: NAS_USER
+                valueFrom:
+                  secretKeyRef:
+                    name: nas-ssh-secret
+                    key: nas_user

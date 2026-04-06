@@ -1,0 +1,66 @@
+---
+name: NAS Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docker/**"
+
+jobs:
+  deploy:
+    name: Deploy Docker Compose to NAS
+    runs-on: homelab-docker-deploy
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect changed stacks
+        id: changed
+        run: |
+          STACKS=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} \
+            | grep '^docker/' \
+            | cut -d/ -f2 \
+            | sort -u \
+            | grep -v '^scripts$')
+          echo "stacks=$STACKS" >> "$GITHUB_OUTPUT"
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$NAS_SSH_KEY" > ~/.ssh/nas_deploy_key
+          chmod 600 ~/.ssh/nas_deploy_key
+          printf '%s\n' "$NAS_SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+        env:
+          NAS_SSH_KEY: ${{ env.NAS_SSH_KEY }}
+          NAS_SSH_KNOWN_HOSTS: ${{ env.NAS_SSH_KNOWN_HOSTS }}
+
+      - name: Rsync changed stacks to NAS
+        run: |
+          SSH_CMD="ssh -i ~/.ssh/nas_deploy_key -o StrictHostKeyChecking=yes"
+          for stack in ${{ steps.changed.outputs.stacks }}; do
+            echo "Syncing stack: $stack"
+            rsync -avz --delete \
+              -e "$SSH_CMD" \
+              "docker/$stack/" \
+              "${NAS_USER}@${NAS_HOST}:/volume3/docker/$stack/"
+          done
+          # Always sync the deploy script so it stays current
+          rsync -avz \
+            -e "$SSH_CMD" \
+            docker/scripts/ \
+            "${NAS_USER}@${NAS_HOST}:/volume3/docker/scripts/"
+
+      - name: Deploy changed stacks on NAS
+        run: |
+          ssh -i ~/.ssh/nas_deploy_key \
+            -o StrictHostKeyChecking=yes \
+            "${NAS_USER}@${NAS_HOST}" \
+            "bash /volume3/docker/scripts/nas-deploy.sh ${{ steps.changed.outputs.stacks }}"
+
+      - name: Clean up SSH key
+        if: always()
+        run: rm -f ~/.ssh/nas_deploy_key
