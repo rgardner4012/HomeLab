@@ -1,0 +1,8 @@
+---
+all:
+  hosts:
+    nas:
+      ansible_host: "{{ lookup('env', 'NAS_HOST') }}"
+      ansible_user: "{{ lookup('env', 'NAS_USER') }}"
+      ansible_ssh_private_key_file: ~/.ssh/nas_deploy_key
+      ansible_ssh_common_args: '-o StrictHostKeyChecking=yes'

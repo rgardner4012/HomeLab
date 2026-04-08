@@ -60,3 +60,8 @@ spec:
                   secretKeyRef:
                     name: nas-ssh-secret
                     key: nas_user
+              - name: SOPS_AGE_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: sops-age-secret
+                    key: private_key

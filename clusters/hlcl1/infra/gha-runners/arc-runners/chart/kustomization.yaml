@@ -4,4 +4,5 @@ resources:
   - namespace.yaml
   - externalsecret-github-app.yaml
   - externalsecret-nas-ssh.yaml
+  - externalsecret-sops-age.yaml
   - helmrelease.yaml

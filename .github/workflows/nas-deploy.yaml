@@ -23,44 +23,67 @@ jobs:
             | grep '^docker/' \
             | cut -d/ -f2 \
             | sort -u \
-            | grep -v '^scripts$')
-          echo "stacks=$STACKS" >> "$GITHUB_OUTPUT"
+            | grep -vE '^(scripts|ansible)$' \
+            | paste -sd ',')
+          echo "stacks=${STACKS}" >> "$GITHUB_OUTPUT"
 
-      - name: Set up SSH
+      - name: Install tools
         run: |
-          mkdir -p ~/.ssh
+          pip install ansible
+          ansible-galaxy collection install -r docker/ansible/requirements.yaml
+          SOPS_VERSION="3.9.4"
+          curl -fsSL \
+            "https://github.com/getsops/sops/releases/download/v${SOPS_VERSION}/sops-v${SOPS_VERSION}.linux.amd64" \
+            -o /usr/local/bin/sops
+          chmod +x /usr/local/bin/sops
+
+      - name: Set up SSH and age key
+        run: |
+          mkdir -p ~/.ssh ~/.config/sops/age
           chmod 700 ~/.ssh
           printf '%s\n' "$NAS_SSH_KEY" > ~/.ssh/nas_deploy_key
           chmod 600 ~/.ssh/nas_deploy_key
           printf '%s\n' "$NAS_SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
+          printf '%s\n' "$SOPS_AGE_KEY" > ~/.config/sops/age/keys.txt
+          chmod 600 ~/.config/sops/age/keys.txt
         env:
           NAS_SSH_KEY: ${{ env.NAS_SSH_KEY }}
           NAS_SSH_KNOWN_HOSTS: ${{ env.NAS_SSH_KNOWN_HOSTS }}
+          SOPS_AGE_KEY: ${{ env.SOPS_AGE_KEY }}
+
+      - name: Decrypt .env files
+        run: |
+          for stack in $(echo "${{ steps.changed.outputs.stacks }}" | tr ',' ' '); do
+            if [[ -f "docker/$stack/.env.sops" ]]; then
+              echo "Decrypting docker/$stack/.env.sops"
+              sops --decrypt "docker/$stack/.env.sops" > "docker/$stack/.env"
+            fi
+          done
 
       - name: Rsync changed stacks to NAS
         run: |
           SSH_CMD="ssh -i ~/.ssh/nas_deploy_key -o StrictHostKeyChecking=yes"
-          for stack in ${{ steps.changed.outputs.stacks }}; do
+          for stack in $(echo "${{ steps.changed.outputs.stacks }}" | tr ',' ' '); do
             echo "Syncing stack: $stack"
             rsync -avz --delete \
               -e "$SSH_CMD" \
               "docker/$stack/" \
-              "${NAS_USER}@${NAS_HOST}:/volume3/docker/$stack/"
+              "${NAS_USER}@${NAS_HOST}:/volume3/docker_compose/$stack/"
           done
-          # Always sync the deploy script so it stays current
-          rsync -avz \
-            -e "$SSH_CMD" \
-            docker/scripts/ \
-            "${NAS_USER}@${NAS_HOST}:/volume3/docker/scripts/"
 
-      - name: Deploy changed stacks on NAS
+      - name: Run Ansible deploy
         run: |
-          ssh -i ~/.ssh/nas_deploy_key \
-            -o StrictHostKeyChecking=yes \
-            "${NAS_USER}@${NAS_HOST}" \
-            "bash /volume3/docker/scripts/nas-deploy.sh ${{ steps.changed.outputs.stacks }}"
+          ansible-playbook \
+            -i docker/ansible/inventory.yaml \
+            -e "stacks=${{ steps.changed.outputs.stacks }}" \
+            docker/ansible/deploy.yaml
 
-      - name: Clean up SSH key
+      - name: Clean up secrets
         if: always()
-        run: rm -f ~/.ssh/nas_deploy_key
+        run: |
+          rm -f ~/.ssh/nas_deploy_key
+          rm -f ~/.config/sops/age/keys.txt
+          for stack in $(echo "${{ steps.changed.outputs.stacks }}" | tr ',' ' '); do
+            rm -f "docker/$stack/.env"
+          done
