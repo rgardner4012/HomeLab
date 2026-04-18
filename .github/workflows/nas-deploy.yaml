@@ -55,9 +55,9 @@ jobs:
           printf '%s\n' "$SOPS_AGE_KEY" > ~/.config/sops/age/keys.txt
           chmod 600 ~/.config/sops/age/keys.txt
         env:
-          NAS_SSH_KEY: ${{ env.NAS_SSH_KEY }}
-          NAS_SSH_KNOWN_HOSTS: ${{ env.NAS_SSH_KNOWN_HOSTS }}
-          SOPS_AGE_KEY: ${{ env.SOPS_AGE_KEY }}
+          NAS_SSH_KEY: ${{ secrets.NAS_SSH_KEY }}
+          NAS_SSH_KNOWN_HOSTS: ${{ secrets.NAS_SSH_KNOWN_HOSTS }}
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
 
       - name: Decrypt .env files
         run: |
