@@ -36,7 +36,7 @@ jobs:
 
       - name: Install tools
         run: |
-          pip install ansible
+          pip install 'ansible>=11,<12'
           ansible-galaxy collection install -r docker/ansible/requirements.yaml
           SOPS_VERSION="3.9.4"
           curl -fsSL \
