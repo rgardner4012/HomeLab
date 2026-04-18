@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - "docker/**"
+      - "!docker/ansible/**"
 
 jobs:
   deploy:
@@ -26,6 +27,12 @@ jobs:
             | grep -vE '^(scripts|ansible)$' \
             | paste -sd ',')
           echo "stacks=${STACKS}" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if no stacks changed
+        if: steps.changed.outputs.stacks == ''
+        run: |
+          echo "No docker stacks changed, skipping deploy."
+          exit 0
 
       - name: Install tools
         run: |
