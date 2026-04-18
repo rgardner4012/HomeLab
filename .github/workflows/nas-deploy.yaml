@@ -69,6 +69,9 @@ jobs:
           done
 
       - name: Rsync changed stacks to NAS
+        env:
+          NAS_USER: ${{ secrets.NAS_USER }}
+          NAS_HOST: ${{ secrets.NAS_HOST }}
         run: |
           SSH_CMD="ssh -i ~/.ssh/nas_deploy_key -o StrictHostKeyChecking=yes"
           for stack in $(echo "${{ steps.changed.outputs.stacks }}" | tr ',' ' '); do
