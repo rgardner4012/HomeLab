@@ -9,9 +9,11 @@ on:
       - "!docker/ansible/**"
 
 jobs:
-  deploy:
-    name: Deploy Docker Compose to NAS
+  detect:
+    name: Detect changed stacks
     runs-on: homelab-docker-deploy
+    outputs:
+      stacks: ${{ steps.changed.outputs.stacks }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -28,11 +30,15 @@ jobs:
             | paste -sd ',')
           echo "stacks=${STACKS}" >> "$GITHUB_OUTPUT"
 
-      - name: Skip if no stacks changed
-        if: steps.changed.outputs.stacks == ''
-        run: |
-          echo "No docker stacks changed, skipping deploy."
-          exit 0
+  deploy:
+    name: Deploy Docker Compose to NAS
+    runs-on: homelab-docker-deploy
+    needs: detect
+    if: needs.detect.outputs.stacks != ''
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Mask secrets
         run: |
@@ -62,14 +68,10 @@ jobs:
           chmod 644 ~/.ssh/known_hosts
           printf '%s\n' "$SOPS_AGE_KEY" > ~/.config/sops/age/keys.txt
           chmod 600 ~/.config/sops/age/keys.txt
-        env:
-          NAS_SSH_KEY: ${{ secrets.NAS_SSH_KEY }}
-          NAS_SSH_KNOWN_HOSTS: ${{ secrets.NAS_SSH_KNOWN_HOSTS }}
-          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
 
       - name: Decrypt .env files
         run: |
-          for stack in $(echo "${{ steps.changed.outputs.stacks }}" | tr ',' ' '); do
+          for stack in $(echo "${{ needs.detect.outputs.stacks }}" | tr ',' ' '); do
             if [[ -f "docker/$stack/.env.sops" ]]; then
               echo "Decrypting docker/$stack/.env.sops"
               sops --decrypt "docker/$stack/.env.sops" > "docker/$stack/.env"
@@ -77,12 +79,9 @@ jobs:
           done
 
       - name: Rsync changed stacks to NAS
-        env:
-          NAS_USER: ${{ secrets.NAS_USER }}
-          NAS_HOST: ${{ secrets.NAS_HOST }}
         run: |
           SSH_CMD="ssh -i ~/.ssh/nas_deploy_key -o StrictHostKeyChecking=yes"
-          for stack in $(echo "${{ steps.changed.outputs.stacks }}" | tr ',' ' '); do
+          for stack in $(echo "${{ needs.detect.outputs.stacks }}" | tr ',' ' '); do
             echo "Syncing stack: $stack"
             rsync -avz --delete \
               -e "$SSH_CMD" \
@@ -94,7 +93,7 @@ jobs:
         run: |
           ansible-playbook \
             -i docker/ansible/inventory.yaml \
-            -e "stacks=${{ steps.changed.outputs.stacks }}" \
+            -e "stacks=${{ needs.detect.outputs.stacks }}" \
             docker/ansible/deploy.yaml
 
       - name: Clean up secrets
@@ -102,6 +101,6 @@ jobs:
         run: |
           rm -f ~/.ssh/nas_deploy_key
           rm -f ~/.config/sops/age/keys.txt
-          for stack in $(echo "${{ steps.changed.outputs.stacks }}" | tr ',' ' '); do
+          for stack in $(echo "${{ needs.detect.outputs.stacks }}" | tr ',' ' '); do
             rm -f "docker/$stack/.env"
           done
