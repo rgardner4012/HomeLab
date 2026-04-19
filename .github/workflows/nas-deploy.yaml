@@ -34,6 +34,14 @@ jobs:
           echo "No docker stacks changed, skipping deploy."
           exit 0
 
+      - name: Mask secrets
+        run: |
+          echo "::add-mask::$NAS_SSH_KEY"
+          echo "::add-mask::$NAS_SSH_KNOWN_HOSTS"
+          echo "::add-mask::$NAS_HOST"
+          echo "::add-mask::$NAS_USER"
+          echo "::add-mask::$SOPS_AGE_KEY"
+
       - name: Install tools
         run: |
           pip install 'ansible>=11,<12'
