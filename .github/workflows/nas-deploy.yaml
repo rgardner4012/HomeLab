@@ -82,11 +82,22 @@ jobs:
         run: |
           SSH_CMD="ssh -i ~/.ssh/nas_deploy_key -o StrictHostKeyChecking=yes"
           for stack in $(echo "${{ needs.detect.outputs.stacks }}" | tr ',' ' '); do
-            echo "Syncing stack: $stack"
+            echo "Syncing compose files for stack: $stack"
             rsync -avz --delete \
+              --exclude 'config/' \
+              --filter 'protect data/' \
+              --filter 'protect logs/' \
               -e "$SSH_CMD" \
               "docker/$stack/" \
               "${NAS_USER}@${NAS_HOST}:/volume3/docker_compose/$stack/"
+
+            if [[ -d "docker/$stack/config" ]]; then
+              echo "Syncing config files for stack: $stack"
+              rsync -avz \
+                -e "$SSH_CMD" \
+                "docker/$stack/config/" \
+                "${NAS_USER}@${NAS_HOST}:/volume3/docker_config/$stack/"
+            fi
           done
 
       - name: Run Ansible deploy
