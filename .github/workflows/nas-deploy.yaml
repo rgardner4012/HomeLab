@@ -1,0 +1,115 @@
+---
+name: NAS Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docker/**"
+      - "!docker/ansible/**"
+
+jobs:
+  detect:
+    name: Detect changed stacks
+    runs-on: homelab-docker-deploy
+    outputs:
+      stacks: ${{ steps.changed.outputs.stacks }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed stacks
+        id: changed
+        run: |
+          STACKS=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} \
+            | grep '^docker/' \
+            | cut -d/ -f2 \
+            | sort -u \
+            | grep -vE '^(scripts|ansible)$' \
+            | paste -sd ',')
+          echo "stacks=${STACKS}" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: Deploy Docker Compose to NAS
+    runs-on: homelab-docker-deploy
+    needs: detect
+    if: needs.detect.outputs.stacks != ''
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Mask secrets
+        run: |
+          echo "::add-mask::$NAS_SSH_KEY"
+          echo "::add-mask::$NAS_SSH_KNOWN_HOSTS"
+          echo "::add-mask::$NAS_HOST"
+          echo "::add-mask::$NAS_USER"
+          echo "::add-mask::$SOPS_AGE_KEY"
+
+      - name: Install tools
+        run: |
+          pip install 'ansible>=11,<12'
+          ansible-galaxy collection install -r docker/ansible/requirements.yaml
+          SOPS_VERSION="3.9.4"
+          curl -fsSL \
+            "https://github.com/getsops/sops/releases/download/v${SOPS_VERSION}/sops-v${SOPS_VERSION}.linux.amd64" \
+            -o /usr/local/bin/sops
+          chmod +x /usr/local/bin/sops
+
+      - name: Set up SSH and age key
+        run: |
+          mkdir -p ~/.ssh ~/.config/sops/age
+          chmod 700 ~/.ssh
+          printf '%s\n' "$NAS_SSH_KEY" > ~/.ssh/nas_deploy_key
+          chmod 600 ~/.ssh/nas_deploy_key
+          printf '%s\n' "$NAS_SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+          printf '%s\n' "$SOPS_AGE_KEY" > ~/.config/sops/age/keys.txt
+          chmod 600 ~/.config/sops/age/keys.txt
+
+      - name: Decrypt .env files
+        run: |
+          for stack in $(echo "${{ needs.detect.outputs.stacks }}" | tr ',' ' '); do
+            if [[ -f "docker/$stack/.env.sops" ]]; then
+              echo "Decrypting docker/$stack/.env.sops"
+              sops --decrypt "docker/$stack/.env.sops" > "docker/$stack/.env"
+            fi
+          done
+
+      - name: Rsync changed stacks to NAS
+        run: |
+          SSH_CMD="ssh -i ~/.ssh/nas_deploy_key -o StrictHostKeyChecking=yes"
+          for stack in $(echo "${{ needs.detect.outputs.stacks }}" | tr ',' ' '); do
+            echo "Syncing compose files for stack: $stack"
+            rsync -avz --delete \
+              --exclude 'config/' \
+              -e "$SSH_CMD" \
+              "docker/$stack/" \
+              "${NAS_USER}@${NAS_HOST}:/volume3/docker_compose/$stack/"
+
+            if [[ -d "docker/$stack/config" ]]; then
+              echo "Syncing config files for stack: $stack"
+              rsync -avz \
+                -e "$SSH_CMD" \
+                "docker/$stack/config/" \
+                "${NAS_USER}@${NAS_HOST}:/volume3/docker_config/$stack/"
+            fi
+          done
+
+      - name: Run Ansible deploy
+        run: |
+          ansible-playbook \
+            -i docker/ansible/inventory.yaml \
+            -e "stacks=${{ needs.detect.outputs.stacks }}" \
+            docker/ansible/deploy.yaml
+
+      - name: Clean up secrets
+        if: always()
+        run: |
+          rm -f ~/.ssh/nas_deploy_key
+          rm -f ~/.config/sops/age/keys.txt
+          for stack in $(echo "${{ needs.detect.outputs.stacks }}" | tr ',' ' '); do
+            rm -f "docker/$stack/.env"
+          done
