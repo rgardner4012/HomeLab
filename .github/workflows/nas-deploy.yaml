@@ -85,8 +85,6 @@ jobs:
             echo "Syncing compose files for stack: $stack"
             rsync -avz --delete \
               --exclude 'config/' \
-              --filter 'protect data/' \
-              --filter 'protect logs/' \
               -e "$SSH_CMD" \
               "docker/$stack/" \
               "${NAS_USER}@${NAS_HOST}:/volume3/docker_compose/$stack/"
