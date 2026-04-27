@@ -144,3 +144,21 @@ Introduce `infra/shared-namespaces/` as the single owner of any namespace that i
 - Namespaces are created early in the reconciliation order, before anything that depends on them.
 - New apps with shared namespaces add their namespace entry to `infra/shared-namespaces/namespaces.yaml` rather than creating their own namespace resource.
 - Single-namespace apps that own their namespace entirely (e.g. pihole) are unaffected and continue to manage their namespace locally.
+
+## 009 - ARC v2 Self-Hosted Runners for NAS Deployment
+
+### Context
+
+Docker Compose stacks on the NAS need to be deployed automatically when changes are merged to main. GitHub-hosted runners cannot reach the NAS as it is on the local network. A self-hosted runner solution is required that fits within the existing K8s cluster and secrets infrastructure.
+
+### Decision
+
+Deploy ARC v2 (Actions Runner Controller) into the K8s cluster to run ephemeral self-hosted GitHub Actions runners. The `nas-deploy` workflow runs on these runners and handles detecting changed stacks, rsyncing files to the NAS, and using Ansible to bring stacks up.
+
+### Impacts
+
+- Runners are ephemeral — each job gets a fresh pod with a clean workspace volume (Longhorn PVC), destroyed after the job completes. No persistent state between runs.
+- Secrets (NAS SSH key, SOPS age key, NAS host/user) are stored in OpenBao, synced to K8s via ESO, and injected as environment variables into the runner pod via the ARC HelmRelease. Secrets never leave the cluster or touch GitHub's servers.
+- The `nas-deploy` workflow splits into a `detect` job and a `deploy` job. The `deploy` job only runs when changed stacks are detected, avoiding unnecessary work on ansible-only or unrelated pushes.
+- Runner security: the workflow only triggers on push to `main` (not `pull_request`), so untrusted PRs cannot execute code on the homelab runner. Branch protection on `main` requiring review is the gate.
+- Secrets injected via the runner pod do not receive GitHub's automatic log masking, so `::add-mask::` directives are applied explicitly at the start of each deploy job.

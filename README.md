@@ -22,10 +22,14 @@ homelab/
 │   ├── naming-and-ips.md      # Hostnames, VLANs, IP allocations
 │   └── disaster-recovery.md   # Backup strategy, restore procedures
 │
-├── docker/                    # NAS Docker Compose stacks
-│   ├── plex/
-│   ├── pihole/
-│   └── vpn-stack/
+├── docker/                    # NAS Docker Compose stacks (deployed via nas-deploy workflow)
+│   ├── ansible/               # Ansible playbook and inventory for stack bring-up
+│   ├── openbao/               # Example stack
+│   │   ├── docker-compose.yaml
+│   │   ├── .env.sops          # SOPS-encrypted env vars (decrypted at deploy time)
+│   │   └── config/            # Optional: stack config files
+│   │       └── openbao.hcl    #   synced to /volume3/docker_config/<stack>/
+│   └── <stack>/               # Compose + env sync to /volume3/docker_compose/<stack>/
 │
 └── clusters/
     └── hlcl1/                 # RKE2 cluster (Flux CD managed)
