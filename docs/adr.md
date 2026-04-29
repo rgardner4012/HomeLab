@@ -158,7 +158,7 @@ Deploy ARC v2 (Actions Runner Controller) into the K8s cluster to run ephemeral 
 ### Impacts
 
 - Runners are ephemeral — each job gets a fresh pod with a clean workspace volume (Longhorn PVC), destroyed after the job completes. No persistent state between runs.
-- Secrets (NAS SSH key, SOPS age key, NAS host/user) are stored in OpenBao, synced to K8s via ESO, and injected as environment variables into the runner pod via the ARC HelmRelease. Secrets never leave the cluster or touch GitHub's servers.
+- Secrets (NAS SSH key, SOPS age key, NAS host/user) are stored in OpenBao, synced to K8s via ESO, and injected as environment variables into the runner pod via the ARC HelmRelease. They are not stored in GitHub Secrets and are only present in the in-cluster runner environment during job execution.
 - The `nas-deploy` workflow splits into a `detect` job and a `deploy` job. The `deploy` job only runs when changed stacks are detected, avoiding unnecessary work on ansible-only or unrelated pushes.
 - Runner security: the workflow only triggers on push to `main` (not `pull_request`), so untrusted PRs cannot execute code on the homelab runner. Branch protection on `main` requiring review is the gate.
 - Secrets injected via the runner pod do not receive GitHub's automatic log masking, so `::add-mask::` directives are applied explicitly at the start of each deploy job.
