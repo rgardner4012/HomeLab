@@ -1,7 +1,7 @@
 ---
 creation_rules:
   # Docker Compose encrypted .env files
-  - path_regex: docker/.*\.env\.sops$
+  - path_regex: docker/.*\.env$
     age: >-
       age1yvyefwwh6avrzpkz2vr3w86ly6q97hdpz02jns2yvaafnjnv448s7jdx7r
 

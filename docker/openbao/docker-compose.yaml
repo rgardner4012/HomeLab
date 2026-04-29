@@ -11,7 +11,7 @@ services:
       - "8200:8200"
       - "8201:8201"
     volumes:
-      - /volume3/docker/openbao/openbao.hcl:/openbao/config/openbao.hcl:ro
+      - /volume3/docker_config/openbao/openbao.hcl:/openbao/config/openbao.hcl:ro
       - /volume1/data/openbao:/openbao/data
     command: server
     environment:
