@@ -26,14 +26,6 @@ spec:
     minRunners: 0
     maxRunners: 3
     runnerScaleSetName: homelab-docker-deploy
-    containerMode:
-      type: kubernetes
-      kubernetesModeWorkVolumeClaim:
-        accessModes: ["ReadWriteOnce"]
-        storageClassName: longhorn
-        resources:
-          requests:
-            storage: 10Gi
     template:
       spec:
         containers:
@@ -65,5 +57,3 @@ spec:
                   secretKeyRef:
                     name: sops-age-secret
                     key: private_key
-              - name: ACTIONS_RUNNER_REQUIRE_JOB_CONTAINER
-                value: "false"
