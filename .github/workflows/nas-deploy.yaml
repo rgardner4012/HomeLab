@@ -2,6 +2,7 @@
 name: NAS Deploy
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
@@ -50,13 +51,16 @@ jobs:
 
       - name: Install tools
         run: |
-          pip install 'ansible>=11,<12'
-          ansible-galaxy collection install -r docker/ansible/requirements.yaml
+          sudo apt-get update && sudo apt-get install -y python3-pip rsync sshpass
+          pip install --break-system-packages 'ansible>=11,<12'
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          $HOME/.local/bin/ansible-galaxy collection install -r docker/ansible/requirements.yaml
           SOPS_VERSION="3.9.4"
           curl -fsSL \
             "https://github.com/getsops/sops/releases/download/v${SOPS_VERSION}/sops-v${SOPS_VERSION}.linux.amd64" \
-            -o /usr/local/bin/sops
-          chmod +x /usr/local/bin/sops
+            -o /tmp/sops
+          sudo mv /tmp/sops /usr/local/bin/sops
+          sudo chmod +x /usr/local/bin/sops
 
       - name: Set up SSH and age key
         run: |
@@ -74,7 +78,7 @@ jobs:
           for stack in $(echo "${{ needs.detect.outputs.stacks }}" | tr ',' ' '); do
             if [[ -f "docker/$stack/.env.sops" ]]; then
               echo "Decrypting docker/$stack/.env.sops"
-              sops --decrypt "docker/$stack/.env.sops" > "docker/$stack/.env"
+              sops --decrypt --input-type dotenv --output-type dotenv "docker/$stack/.env.sops" > "docker/$stack/.env"
             fi
           done
 
@@ -83,18 +87,18 @@ jobs:
           SSH_CMD="ssh -i ~/.ssh/nas_deploy_key -o StrictHostKeyChecking=yes"
           for stack in $(echo "${{ needs.detect.outputs.stacks }}" | tr ',' ' '); do
             echo "Syncing compose files for stack: $stack"
-            rsync -avz --delete \
+            rsync -avzO --delete \
               --exclude 'config/' \
               -e "$SSH_CMD" \
               "docker/$stack/" \
-              "${NAS_USER}@${NAS_HOST}:/volume3/docker_compose/$stack/"
+              "${NAS_USER}@${NAS_HOST}:/docker_compose/$stack/"
 
             if [[ -d "docker/$stack/config" ]]; then
               echo "Syncing config files for stack: $stack"
-              rsync -avz \
+              rsync -avzO \
                 -e "$SSH_CMD" \
                 "docker/$stack/config/" \
-                "${NAS_USER}@${NAS_HOST}:/volume3/docker_config/$stack/"
+                "${NAS_USER}@${NAS_HOST}:/docker_config/$stack/"
             fi
           done
 
