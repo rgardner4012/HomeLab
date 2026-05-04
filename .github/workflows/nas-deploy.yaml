@@ -78,7 +78,7 @@ jobs:
           for stack in $(echo "${{ needs.detect.outputs.stacks }}" | tr ',' ' '); do
             if [[ -f "docker/$stack/.env.sops" ]]; then
               echo "Decrypting docker/$stack/.env.sops"
-              sops --decrypt "docker/$stack/.env.sops" > "docker/$stack/.env"
+              sops --decrypt --input-type dotenv --output-type dotenv "docker/$stack/.env.sops" > "docker/$stack/.env"
             fi
           done
 
