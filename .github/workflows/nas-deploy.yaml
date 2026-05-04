@@ -49,12 +49,6 @@ jobs:
           echo "::add-mask::$NAS_USER"
           echo "::add-mask::$SOPS_AGE_KEY"
 
-      - name: Debug secret lengths
-        run: |
-          echo "SOPS_AGE_KEY length: ${#SOPS_AGE_KEY}"
-          echo "NAS_SSH_KEY length: ${#NAS_SSH_KEY}"
-          echo "NAS_HOST length: ${#NAS_HOST}"
-
       - name: Install tools
         run: |
           sudo apt-get update && sudo apt-get install -y python3-pip rsync sshpass
@@ -100,14 +94,14 @@ jobs:
               --exclude 'config/' \
               -e "$SSH_CMD" \
               "docker/$stack/" \
-              "${NAS_USER}@${NAS_HOST}:/volume3/docker_compose/$stack/"
+              "${NAS_USER}@${NAS_HOST}:/docker_compose/$stack/"
 
             if [[ -d "docker/$stack/config" ]]; then
               echo "Syncing config files for stack: $stack"
               rsync -avz \
                 -e "$SSH_CMD" \
                 "docker/$stack/config/" \
-                "${NAS_USER}@${NAS_HOST}:/volume3/docker_config/$stack/"
+                "${NAS_USER}@${NAS_HOST}:/docker_config/$stack/"
             fi
           done
 
