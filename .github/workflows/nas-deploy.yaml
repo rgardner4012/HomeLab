@@ -4,7 +4,7 @@ name: NAS Deploy
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, fix/Nas_deploy_job_entry_fix]
     paths:
       - "docker/**"
       - "!docker/ansible/**"
