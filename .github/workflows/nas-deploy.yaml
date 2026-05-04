@@ -4,7 +4,7 @@ name: NAS Deploy
 on:
   workflow_dispatch:
   push:
-    branches: [main, fix/Nas_deploy_job_entry_fix]
+    branches: [main]
     paths:
       - "docker/**"
       - "!docker/ansible/**"
@@ -72,9 +72,6 @@ jobs:
           chmod 644 ~/.ssh/known_hosts
           printf '%s\n' "$SOPS_AGE_KEY" > ~/.config/sops/age/keys.txt
           chmod 600 ~/.config/sops/age/keys.txt
-          echo "keys.txt size: $(wc -c < ~/.config/sops/age/keys.txt)"
-          echo "keys.txt lines: $(wc -l < ~/.config/sops/age/keys.txt)"
-          cat ~/.config/sops/age/keys.txt | grep -c "^AGE-SECRET-KEY" || echo "no AGE-SECRET-KEY line found"
 
       - name: Decrypt .env files
         run: |
@@ -109,7 +106,7 @@ jobs:
         run: |
           ansible-playbook \
             -i docker/ansible/inventory.yaml \
-            -e "stacks=${{ needs.detect.outputs.stacks }}" --check \
+            -e "stacks=${{ needs.detect.outputs.stacks }}" \
             docker/ansible/deploy.yaml
 
       - name: Clean up secrets
