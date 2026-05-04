@@ -90,7 +90,7 @@ jobs:
           SSH_CMD="ssh -i ~/.ssh/nas_deploy_key -o StrictHostKeyChecking=yes"
           for stack in $(echo "${{ needs.detect.outputs.stacks }}" | tr ',' ' '); do
             echo "Syncing compose files for stack: $stack"
-            rsync -avz --delete \
+            rsync -avzO --delete \
               --exclude 'config/' \
               -e "$SSH_CMD" \
               "docker/$stack/" \
