@@ -98,7 +98,7 @@ jobs:
 
             if [[ -d "docker/$stack/config" ]]; then
               echo "Syncing config files for stack: $stack"
-              rsync -avz \
+              rsync -avzO \
                 -e "$SSH_CMD" \
                 "docker/$stack/config/" \
                 "${NAS_USER}@${NAS_HOST}:/docker_config/$stack/"
