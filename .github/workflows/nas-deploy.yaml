@@ -72,6 +72,9 @@ jobs:
           chmod 644 ~/.ssh/known_hosts
           printf '%s\n' "$SOPS_AGE_KEY" > ~/.config/sops/age/keys.txt
           chmod 600 ~/.config/sops/age/keys.txt
+          echo "keys.txt size: $(wc -c < ~/.config/sops/age/keys.txt)"
+          echo "keys.txt lines: $(wc -l < ~/.config/sops/age/keys.txt)"
+          cat ~/.config/sops/age/keys.txt | grep -c "^AGE-SECRET-KEY" || echo "no AGE-SECRET-KEY line found"
 
       - name: Decrypt .env files
         run: |
