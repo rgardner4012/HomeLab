@@ -162,3 +162,24 @@ Deploy ARC v2 (Actions Runner Controller) into the K8s cluster to run ephemeral 
 - The `nas-deploy` workflow splits into a `detect` job and a `deploy` job. The `deploy` job only runs when changed stacks are detected, avoiding unnecessary work on ansible-only or unrelated pushes.
 - Runner security: the workflow only triggers on push to `main` (not `pull_request`), so untrusted PRs cannot execute code on the homelab runner. Branch protection on `main` requiring review is the gate.
 - Secrets injected via the runner pod do not receive GitHub's automatic log masking, so `::add-mask::` directives are applied explicitly at the start of each deploy job.
+
+## 010 - TrueNAS SCALE over UGOS, with 5x20TB RAIDZ2 pool
+
+### Context
+
+The UGREEN DXP6800 Pro shipped with UGOS, which I hit several friction points on: a hardware fault that needed recovery, a few security concerns around the stock surface area, and updates that would silently undo configuration I had set on the CLI (sshd, system config, etc.) by reapplying values from the UGOS UI/config DB. UGOS is also closed enough that it's hard to manage declaratively or recover predictably. At the same time the original 5x10TB pool was running out of headroom for the media stack.
+
+### Decision
+
+Reinstall the NAS on TrueNAS SCALE (Community Edition) and rebuild storage as a 5x20TB RAIDZ2 data pool (~53TB usable) plus a 2x SSD mirrored boot pool so a single boot drive failure can't take the NAS offline. ZFS replaces the UGOS storage stack, and TrueNAS' API becomes the management surface for anything we can't keep in Git.
+
+### Impacts
+
+- ZFS + RAIDZ2 on the data pool tolerates 2 simultaneous disk failures, with scrubs and checksums catching bitrot the previous setup couldn't see.
+- Mirrored boot pool means the OS survives a single SSD failure — no full reinstall path for a dead boot drive.
+- Usable capacity goes from ~36TB to ~53TB, restoring headroom for the media library and giving room for ZFS snapshots/replication as a backup target.
+- TrueNAS still keeps its own config DB and strongly steers you toward the UI/API for settings rather than letting you treat `/etc` as source of truth — better than UGOS (CLI edits no longer get clobbered on update, since changes go through middlewared) but a step short of fully declarative. Accepted as the cost of staying on a supported appliance OS.
+- The TrueNAS API (and middlewared) gives a real automation surface for users, datasets, shares, snapshots, and replication, which UGOS did not.
+- Docker Compose workloads (see [ADR-005](#005---media-on-docker)) keep running on the NAS; the dataset layout under `/mnt/<pool>/...` replaces the old `/volume3/...` paths and stack mounts were updated to match.
+- NFS exports for Longhorn backups and the monitoring StorageClass (see [ADR-007](#007---nfs-csi-driver-for-monitoring-storage)) are now ZFS datasets, so snapshots of those exports are cheap and atomic.
+- The UGOS app store and any UGREEN-specific integrations are gone; everything on the NAS is now either a Docker Compose stack from this repo or a TrueNAS-native feature.

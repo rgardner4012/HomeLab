@@ -16,7 +16,7 @@
 
 | Hostname | IP | Role | Notes |
 | -------- | -- | ---- | ----- |
-| nas.homelab | 192.168.0.233 | UGREEN DXP6800 Pro — NAS + Docker host | Media stacks, NFS, Pi-hole secondary |
+| nas.homelab | 192.168.0.233 | UGREEN DXP6800 Pro — TrueNAS SCALE + Docker host | Media stacks, NFS, Pi-hole secondary; 5x20TB RAIDZ2 data pool, 2x SSD mirror boot pool |
 | nasbridge0.homelab | 192.168.0.235 | NAS bridge interface | Docker bridge network |
 | nuc1.homelab | 192.168.0.50 | RKE2 worker (i5-8259U, 32GB) | |
 | nuc2.homelab | 192.168.0.51 | RKE2 worker (i7-8559U, 32GB) | |
