@@ -8,10 +8,10 @@ A hybrid homelab managed entirely through GitOps — Docker Compose stacks on a 
 
 | Device | Role | CPU | RAM | Storage | OS |
 | -------- | ------ | ----- | ----- | --------- | ---- |
-| UGREEN DXP6800 Pro | NAS + Docker host | Intel i5-1235U | 40Gb | 53TB | TrueNAS SCALE |
-| Intel NUC #1 | RKE2 worker | Intel Core i5-8259U | 32Gb | 500Gb | Elemental OS |
-| Intel NUC #2 | RKE2 worker | Intel Core i7-8559U | 32Gb | 250Gb | Elemental OS |
-| Intel NUC #3 | RKE2 worker | Intel Core i7-8559U | 32Gb | 250Gb | Elemental OS |
+| UGREEN DXP6800 Pro | NAS + Docker host | Intel i5-1235U | 40GB | 53TB | TrueNAS SCALE |
+| Intel NUC #1 | RKE2 worker | Intel Core i5-8259U | 32GB | 500GB | Elemental OS |
+| Intel NUC #2 | RKE2 worker | Intel Core i7-8559U | 32GB | 250GB | Elemental OS |
+| Intel NUC #3 | RKE2 worker | Intel Core i7-8559U | 32GB | 250GB | Elemental OS |
 
 ### Lab (skills prep, not GitOps-managed)
 
