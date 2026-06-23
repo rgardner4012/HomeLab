@@ -17,8 +17,8 @@ A hybrid homelab managed entirely through GitOps — Docker Compose stacks on a 
 
 | Device | Role | CPU | RAM | Storage | OS |
 | -------- | ------ | ----- | ----- | --------- | ---- |
-| Dell PowerEdge R620 | Nutanix CE host (AHV + CVM) | 2x Xeon | 128Gb | Mixed SSD/HDD | Nutanix CE (AHV) |
-| Dell XPS 15 9510 | Proxmox host (AAP + TFE agent VMs) | Intel Core (11th gen) | 32Gb | 1TB SSD | Proxmox VE |
+| Dell PowerEdge R620 | Nutanix CE host (AHV + CVM) | 2x Xeon | 128GB | Mixed SSD/HDD | Nutanix CE (AHV) |
+| Dell XPS 15 9510 | Proxmox host (AAP + TFE agent VMs) | Intel Core (11th gen) | 32GB | 1TB SSD | Proxmox VE |
 
 ## Repository Structure
 
