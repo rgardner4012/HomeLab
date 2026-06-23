@@ -6,6 +6,10 @@
 - [ ] Longhorn backup target configured (NAS NFS share)
 - [ ] Longhorn recurring snapshots scheduled
 - [X] Age private key backed up offline
+- [ ] TrueNAS config backup (encrypted) saved offline + in password manager
+- [ ] ZFS scrubs scheduled on data pool (RAIDZ2) and boot pool (mirror)
+- [ ] ZFS snapshot tasks scheduled for media + app config datasets
+- [ ] ZFS replication target configured for critical datasets
 - [ ] CNPG backup target configured (NAS NFS share or object storage)
 - [ ] CNPG scheduled backups enabled for ff-postgres (production)
 - [ ] NAS app config directories backed up
@@ -35,6 +39,10 @@
 | ff-postgres (dev) | N/A | ~5 min | Single instance, dev data is disposable — recreate from scratch |
 | Media library | N/A | N/A | Not backed up (re-downloadable, want to find a way to track what currently exists, will *arr config backups work here?) |
 | App configs (Sonarr, Radarr, etc.) | Last NAS backup | ~30 min | Restore config dirs, redeploy |
+| NAS data pool | Last ZFS snapshot | ~1 hr | RAIDZ2 tolerates 2-disk loss; full pool rebuild via import or replication restore |
+| NAS boot pool | N/A | ~1 hr | 2x SSD mirror tolerates 1-drive loss; reinstall TrueNAS + restore config backup on total loss |
+| TrueNAS config | Last config backup | ~15 min | Restored via web UI after reinstall, before importing data pool |
+| Lab compute (Nutanix, AAP, TFE agent) | N/A | N/A | Skills-prep tier — rebuild from scratch, nothing here holds state that matters (see [ADR-011](adr.md)) |
 | SOPS encryption key (age) | Offline backup and external Password Manager | Manual | Required to decrypt all secrets |
 
 ## RKE2 Cluster Recovery
@@ -84,6 +92,26 @@ ff-postgres is managed by the CloudNativePG operator, reconciled by Flux via the
 5. `ff-postgres-app` Secret is recreated by CNPG and available to the ff app
 
 **Dev** instance (single replica) is treated as disposable — recreate from scratch, run migrations.
+
+## NAS Recovery
+
+The NAS runs TrueNAS SCALE on a 2x SSD mirrored boot pool, with a 5x20TB RAIDZ2 data pool (~53TB usable). See [ADR-010](adr.md).
+
+### Single disk failure (data pool)
+
+RAIDZ2 keeps the pool online through 2 simultaneous disk losses. Replace the failed disk and resilver — no service interruption, no manual data restore.
+
+### Single disk failure (boot pool)
+
+The 2x SSD mirror tolerates one boot drive failure. Replace the failed SSD and let TrueNAS resilver the boot pool — NAS stays online throughout.
+
+### Total NAS loss (full reinstall)
+
+1. Reinstall TrueNAS SCALE onto fresh boot SSDs (mirrored).
+2. Restore the TrueNAS config backup via the web UI — this brings back users, datasets, shares, NFS exports, snapshot tasks, and API keys.
+3. Import the existing data pool if the disks survived, or recreate the pool and restore from ZFS replication target.
+4. Re-run the most recent successful **NAS Deploy** workflow run from GitHub Actions, or push a no-op change under `docker/` on `main` to trigger a fresh deploy (rsync + Ansible).
+5. Verify NFS exports are reachable from the cluster — Longhorn backup target and the monitoring StorageClass depend on them.
 
 ### PiHole recovery
 
