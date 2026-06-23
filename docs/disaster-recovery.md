@@ -42,6 +42,7 @@
 | NAS data pool | Last ZFS snapshot | ~1 hr | RAIDZ2 tolerates 2-disk loss; full pool rebuild via import or replication restore |
 | NAS boot pool | N/A | ~1 hr | 2x SSD mirror tolerates 1-drive loss; reinstall TrueNAS + restore config backup on total loss |
 | TrueNAS config | Last config backup | ~15 min | Restored via web UI after reinstall, before importing data pool |
+| Lab compute (Nutanix, AAP, TFE agent) | N/A | N/A | Skills-prep tier — rebuild from scratch, nothing here holds state that matters (see [ADR-011](adr.md)) |
 | SOPS encryption key (age) | Offline backup and external Password Manager | Manual | Required to decrypt all secrets |
 
 ## RKE2 Cluster Recovery

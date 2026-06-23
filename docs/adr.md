@@ -183,3 +183,36 @@ Reinstall the NAS on TrueNAS SCALE (Community Edition) and rebuild storage as a 
 - Docker Compose workloads (see [ADR-005](#005---media-on-docker)) keep running on the NAS; the dataset layout under `/mnt/<pool>/...` replaces the old `/volume3/...` paths and stack mounts were updated to match.
 - NFS exports for Longhorn backups and the monitoring StorageClass (see [ADR-007](#007---nfs-csi-driver-for-monitoring-storage)) are now ZFS datasets, so snapshots of those exports are cheap and atomic.
 - The UGOS app store and any UGREEN-specific integrations are gone; everything on the NAS is now either a Docker Compose stack from this repo or a TrueNAS-native feature.
+
+## 011 - Lab compute tier for enterprise-tooling skills prep
+
+### Context
+
+For a new job I want hands-on time with platforms I'll see at work but don't currently run anywhere in the homelab: Ansible Automation Platform (AAP), Terraform Enterprise (specifically the agent pattern), and Nutanix. These are heavy compared to the existing workload mix — AAP wants a multi-GB VM, Nutanix CE wants a single physical host with 32GB+ RAM and multiple disks, and a TFE agent needs a persistent worker with credential access to whatever it's provisioning. The existing 3-NUC RKE2 cluster isn't sized for this, and I don't want transient learning workloads mixed with the platform services I rely on (DNS, monitoring, ingress, secrets).
+
+I also don't expect this tier to be permanent. Once I'm comfortable with the platforms I'd rather tear it down than carry the power bill and maintenance burden indefinitely.
+
+### Decision
+
+Add a third compute tier dedicated to enterprise-tooling labs, kept entirely separate from the NAS + RKE2 core:
+
+- **R620 (`r620.homelab`, iDRAC `idrac.homelab`)** runs Nutanix CE on bare metal — dual Xeon, 128GB RAM, mixed SSD/HDD fits the CE single-node requirements. AHV host at `r620.homelab`, CVM at `cvm.homelab`.
+- **Dell XPS 15 9510 (`pve.homelab`)** runs Proxmox VE — 32GB RAM, 1TB SSD — and hosts the lab VMs.
+- **AAP (`aap.homelab`)** runs as a Proxmox VM.
+- **TFE agent (`tfagent.homelab`)** runs as a Proxmox VM. Only the agent is local; TFE itself stays hosted.
+
+The TFE agent could have gone into RKE2 (the ARC pattern from [ADR-009](#009---arc-v2-self-hosted-runners-for-nas-deployment) would have been reusable), but Proxmox wins here because:
+
+1. The point of this tier is to mirror how these platforms get deployed at work, and TFE agents in real environments overwhelmingly run on dedicated VM worker pools, not k8s.
+2. Terraform runs can be noisy (long-lived plans/applies, outbound API calls to Nutanix/vCenter/etc.) and isolating them from platform workloads is worth more than declarative-ness on a temporary box.
+3. Decommission story is clean — power off the XPS and the whole agent disappears, no Flux/cluster cleanup.
+4. Proxmox has the headroom; RKE2 doesn't have much to spare.
+
+### Impacts
+
+- Lab compute is treated as best-effort. Nothing in this tier should hold state that matters — DR coverage stays light and recovery is "rebuild from scratch."
+- Proxmox is **not** brought under Flux/GitOps. It's managed manually because it's expected to be temporary and the automation work doesn't pay back.
+- The R620 is a high-draw bare-metal box; expect to keep it powered off when not actively learning.
+- No new networking — these hosts join the flat 192.168.0.0/24 LAN. See [naming-and-ips.md](naming-and-ips.md) for the new rows.
+- Secrets for AAP and the TFE agent stay local to each tool (AAP credentials store, TFE workspace vars) rather than going through OpenBao/ESO — neither runs in K8s, and the lab tier shouldn't take a dependency on core homelab infrastructure.
+- When the lab is retired: power off the R620, shut down the Proxmox VMs, remove rows from `naming-and-ips.md`, and leave this ADR in place as historical context.

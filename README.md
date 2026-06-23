@@ -1,8 +1,10 @@
 # 🏠 Homelab GitOps
 
-A hybrid homelab managed entirely through GitOps — Docker Compose stacks on a NAS for media workloads, and a 3-node RKE2 Kubernetes cluster for platform services.
+A hybrid homelab managed entirely through GitOps — Docker Compose stacks on a NAS for media workloads, and a 3-node RKE2 Kubernetes cluster for platform services. A separate lab tier (Nutanix on an R620, Proxmox on an XPS) hosts AAP, a TFE agent, and other enterprise tooling for skills prep — kept outside the GitOps loop because it's expected to be temporary.
 
 ## Hardware
+
+### Core
 
 | Device | Role | CPU | RAM | Storage | OS |
 | -------- | ------ | ----- | ----- | --------- | ---- |
@@ -10,6 +12,13 @@ A hybrid homelab managed entirely through GitOps — Docker Compose stacks on a 
 | Intel NUC #1 | RKE2 worker | Intel Core i5-8259U | 32Gb | 500Gb | Elemental OS |
 | Intel NUC #2 | RKE2 worker | Intel Core i7-8559U | 32Gb | 250Gb | Elemental OS |
 | Intel NUC #3 | RKE2 worker | Intel Core i7-8559U | 32Gb | 250Gb | Elemental OS |
+
+### Lab (skills prep, not GitOps-managed)
+
+| Device | Role | CPU | RAM | Storage | OS |
+| -------- | ------ | ----- | ----- | --------- | ---- |
+| Dell PowerEdge R620 | Nutanix CE host (AHV + CVM) | 2x Xeon | 128Gb | Mixed SSD/HDD | Nutanix CE (AHV) |
+| Dell XPS 15 9510 | Proxmox host (AAP + TFE agent VMs) | Intel Core (11th gen) | 32Gb | 1TB SSD | Proxmox VE |
 
 ## Repository Structure
 
