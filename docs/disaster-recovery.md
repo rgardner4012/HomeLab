@@ -110,7 +110,7 @@ The 2x SSD mirror tolerates one boot drive failure. Replace the failed SSD and l
 1. Reinstall TrueNAS SCALE onto fresh boot SSDs (mirrored).
 2. Restore the TrueNAS config backup via the web UI — this brings back users, datasets, shares, NFS exports, snapshot tasks, and API keys.
 3. Import the existing data pool if the disks survived, or recreate the pool and restore from ZFS replication target.
-4. Re-run the `nas-deploy` workflow (or re-merge to `main`) to rsync all Docker Compose stacks back onto the NAS and bring them up via Ansible.
+4. Re-run the most recent successful **NAS Deploy** workflow run from GitHub Actions, or push a no-op change under `docker/` on `main` to trigger a fresh deploy (rsync + Ansible).
 5. Verify NFS exports are reachable from the cluster — Longhorn backup target and the monitoring StorageClass depend on them.
 
 ### PiHole recovery
