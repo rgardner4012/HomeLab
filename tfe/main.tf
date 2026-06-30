@@ -12,11 +12,10 @@ locals {
   # Build a name->uuid map of clusters registered to PC, then pick ours by name.
   # On single-node CE there's one PE cluster; var.cluster_name must match what
   # PE/PC shows (you named it "cluster1").
-  cluster_uuid = [
-    for c in data.nutanix_clusters.clusters.entities :
-    c.metadata.uuid
+  cluster_uuid = one([
+    for c in data.nutanix_clusters.clusters.entities : c.metadata.uuid
     if c.name == var.cluster_name
-  ][0]
+  ])
 }
 
 # Look up the subnet by name -> returns .id (subnet UUID).
