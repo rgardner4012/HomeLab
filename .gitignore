@@ -90,9 +90,6 @@ node_modules/
 tmp/
 .cache/
 
-# Local .terraform directories
-.terraform/
-
 # .tfstate files
 *.tfstate
 *.tfstate.*
@@ -127,3 +124,14 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+# Local state (shouldn't exist with cloud backend, but belt-and-suspenders)
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Never commit real variable values / secrets
+terraform.tfvars
+*.auto.tfvars
+secrets.tf
